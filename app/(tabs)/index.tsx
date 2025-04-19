@@ -157,12 +157,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
     marginTop: 24,
   },
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
   titleContainer: {
     flexDirection: 'row',
     gap: 8,
@@ -197,11 +191,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 8,
   },
-  description: {
-    fontSize: 14,
-    marginBottom: 6,
-    color: '#555',
-  },
+
   temp: {
     fontSize: 16,
     fontWeight: '600',

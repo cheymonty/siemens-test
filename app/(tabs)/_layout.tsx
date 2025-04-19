@@ -28,11 +28,20 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name='weatherScreen'
+        name='index'
         options={{
           title: 'Weather',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name='weather-cloudy' color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name='bluetoothScreen'
+        options={{
+          title: 'Bluetooth',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name='bluetooth' color={color} />
           ),
         }}
       />
