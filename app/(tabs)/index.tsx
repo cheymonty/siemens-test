@@ -81,6 +81,7 @@ export default function WeatherScreen() {
           <TextInput
             value={zipcode}
             keyboardType='numeric'
+            placeholder='Enter US zipcode'
             onChangeText={(text) => setZipcode(text)}
             style={styles.input}
             maxLength={5}
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 40,
-    width: 100,
+    width: '50%',
     borderWidth: 1,
   },
   list: {

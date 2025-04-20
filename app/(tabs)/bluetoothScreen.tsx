@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { requestBluetoothPermission } from '@/services/permissions';
 import { MaterialIcons } from '@expo/vector-icons';
+import { getDeviceServicesAndCharactertistics } from '@/services/ble';
 
 export type BleDeviceData = {
   device: BleDevice;
@@ -30,17 +31,17 @@ export default function BluetoothScreen() {
   const [allDevices, setAllDevices] = useState<BleDevice[]>([]);
   const [connectedDevices, setConnectedDevices] = useState<BleDeviceData[]>([]);
   const router = useRouter();
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnectingIds, setIsConnectingIds] = useState<string[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       async function setup() {
         const hasPermission = await requestBluetoothPermission();
         setHasBluetoothPermission(hasPermission);
-        if (!hasBluetoothPermission) {
+        if (!hasPermission) {
           return;
         }
-        scanForPeripherals();
+        await scanForPeripherals();
       }
       setup();
       return () => {
@@ -52,25 +53,17 @@ export default function BluetoothScreen() {
 
   async function connectToDevice(device: BleDevice) {
     try {
-      setIsConnecting(true);
-      const connected = await device.connect();
-      await connected.discoverAllServicesAndCharacteristics();
-      const services = await connected.services();
+      setIsConnectingIds((prev) => [...prev, device.id]);
 
-      let allCharacteristics: Characteristic[] = [];
-      for (const service of services) {
-        const characteristics = await connected.characteristicsForService(
-          service.uuid
-        );
-        allCharacteristics = [...allCharacteristics, ...characteristics];
-      }
+      const { connectedDevice, services, characteristics } =
+        await getDeviceServicesAndCharactertistics(device);
 
       setConnectedDevices((prev) => [
         ...prev,
         {
-          device: connected,
-          services,
-          characteristics: allCharacteristics,
+          device: connectedDevice,
+          services: services,
+          characteristics: characteristics,
         },
       ]);
       setAllDevices((prev) => {
@@ -79,7 +72,7 @@ export default function BluetoothScreen() {
     } catch (e: any) {
       Alert.alert(`Failed to connect`, e.message);
     } finally {
-      setIsConnecting(false);
+      setIsConnectingIds((prev) => prev.filter((id) => id !== device.id));
     }
   }
 
@@ -90,12 +83,18 @@ export default function BluetoothScreen() {
       }
 
       if (await device.isConnected()) {
+        const { connectedDevice, services, characteristics } =
+          await getDeviceServicesAndCharactertistics(device);
         setConnectedDevices((prev) => {
           const exists = prev.some((item) => item.device.id === device.id);
           if (exists) return prev;
           return [
             ...prev,
-            { device: device, characteristics: null, services: null },
+            {
+              device: connectedDevice,
+              services: services,
+              characteristics: characteristics,
+            },
           ];
         });
       } else {
@@ -140,13 +139,10 @@ export default function BluetoothScreen() {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => {
-              // router.navigate(pathname: '/bleDeviceDataScreen', options: {
-              //   data: JSON.stringify(deviceObj), // Serialize the object
-              // })
               router.navigate({
                 pathname: '/bleDeviceDataScreen',
                 params: {
-                  data: JSON.stringify(item),
+                  _data: JSON.stringify(item),
                 },
               });
             }}
@@ -175,7 +171,10 @@ export default function BluetoothScreen() {
       />
 
       <ThemedView
-        style={[styles.innerContainer, { flexDirection: 'row', gap: 12 }]}
+        style={[
+          styles.innerContainer,
+          { flexDirection: 'row', gap: 12, alignItems: 'center' },
+        ]}
       >
         <ThemedText type='title'>Available Devices</ThemedText>
         <ActivityIndicator animating size='large' />
@@ -185,26 +184,38 @@ export default function BluetoothScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListFooterComponent={<ThemedView style={{ marginBottom: 12 }} />}
-        renderItem={({ item }) => (
-          <Pressable
-            onPress={async () => {
-              if (!isConnecting) {
-                await connectToDevice(item);
-              }
-            }}
-            disabled={isConnecting}
-            style={({ pressed }) => [
-              {
-                opacity: pressed ? 0.5 : 1,
-              },
-            ]}
-          >
-            <ThemedView style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <MaterialIcons name='bluetooth' size={22} />
-              <ThemedText>{item.name}</ThemedText>
-            </ThemedView>
-          </Pressable>
-        )}
+        renderItem={({ item }) => {
+          const isConnecting = isConnectingIds.includes(item.id);
+          return (
+            <Pressable
+              onPress={async () => {
+                if (!isConnecting) {
+                  await connectToDevice(item);
+                }
+              }}
+              disabled={isConnecting}
+              style={({ pressed }) => [
+                {
+                  opacity: pressed ? 0.5 : 1,
+                },
+              ]}
+            >
+              <ThemedView
+                style={{ flexDirection: 'row', alignItems: 'center' }}
+              >
+                <MaterialIcons name='bluetooth' size={22} />
+                <ThemedText>{item.name}</ThemedText>
+                {isConnecting && (
+                  <ActivityIndicator
+                    animating
+                    size='small'
+                    style={{ marginLeft: 12 }}
+                  />
+                )}
+              </ThemedView>
+            </Pressable>
+          );
+        }}
       />
     </ThemedSafeAreaView>
   );

@@ -1,9 +1,27 @@
-import { View, type ViewProps } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  ScrollView,
+  ScrollViewProps,
+  View,
+  type ViewProps,
+} from 'react-native';
+import {
+  SafeAreaView,
+  SafeAreaViewProps,
+} from 'react-native-safe-area-context';
 
 import { useThemeColor } from '@/hooks/useThemeColor';
 
 export type ThemedViewProps = ViewProps & {
+  lightColor?: string;
+  darkColor?: string;
+};
+
+export type ThemedSafeAreaViewProps = SafeAreaViewProps & {
+  lightColor?: string;
+  darkColor?: string;
+};
+
+export type ThemedScrollViewProps = ScrollViewProps & {
   lightColor?: string;
   darkColor?: string;
 };
@@ -27,7 +45,7 @@ export function ThemedSafeAreaView({
   lightColor,
   darkColor,
   ...otherProps
-}: ThemedViewProps) {
+}: ThemedSafeAreaViewProps) {
   const backgroundColor = useThemeColor(
     { light: lightColor, dark: darkColor },
     'background'
@@ -35,6 +53,25 @@ export function ThemedSafeAreaView({
 
   return (
     <SafeAreaView
+      style={[{ backgroundColor }, { flex: 1 }, style]}
+      {...otherProps}
+    />
+  );
+}
+
+export function ThemedScrollView({
+  style,
+  lightColor,
+  darkColor,
+  ...otherProps
+}: ThemedScrollViewProps) {
+  const backgroundColor = useThemeColor(
+    { light: lightColor, dark: darkColor },
+    'background'
+  );
+
+  return (
+    <ScrollView
       style={[{ backgroundColor }, { flex: 1 }, style]}
       {...otherProps}
     />
