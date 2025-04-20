@@ -15,6 +15,7 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'weather-cloudy': 'cloud',
   bluetooth: 'bluetooth',
+  wifi: 'wifi',
 } as Partial<
   Record<
     import('expo-symbols').SymbolViewProps['name'],

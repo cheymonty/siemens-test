@@ -45,6 +45,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name='wifiScreen'
+        options={{
+          title: 'Wifi',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name='wifi' color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
