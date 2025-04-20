@@ -16,6 +16,7 @@ const MAPPING = {
   'weather-cloudy': 'cloud',
   bluetooth: 'bluetooth',
   wifi: 'wifi',
+  'barcode-reader': 'barcode-reader',
 } as Partial<
   Record<
     import('expo-symbols').SymbolViewProps['name'],

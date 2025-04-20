@@ -54,6 +54,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name='barcodeScreen'
+        options={{
+          title: 'Scanner',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name='barcode-reader' color={color} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

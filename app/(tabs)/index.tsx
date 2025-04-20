@@ -11,7 +11,6 @@ import { ThemedSafeAreaView, ThemedView } from '@/components/ThemedView';
 import {
   fetchCurrentTemperature,
   fetchThreeDayForecast,
-  transformDate,
 } from '@/services/weather-api';
 import {
   HistoryTemperature,
@@ -19,6 +18,7 @@ import {
 } from '@/types/weather/WeatherTypes';
 import { storeZipcode, getLastSearchedZipcodes } from '@/services/storage';
 import { useFocusEffect } from 'expo-router';
+import { transformDate } from '@/services/date';
 
 export default function WeatherScreen() {
   const [zipcode, setZipcode] = useState('');

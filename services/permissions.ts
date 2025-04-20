@@ -68,3 +68,18 @@ export async function requestWifiPermission() {
   );
   return granted === PermissionsAndroid.RESULTS.GRANTED;
 }
+
+export async function requestCameraPermission() {
+  const granted = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.CAMERA,
+    {
+      title: 'Camera permission is required to scan barcode',
+      message:
+        'This app needs camera permission as this is required ' +
+        'to scan barcodes',
+      buttonNegative: 'DENY',
+      buttonPositive: 'ALLOW',
+    }
+  );
+  return granted === PermissionsAndroid.RESULTS.GRANTED;
+}
