@@ -18,9 +18,7 @@ export async function storeZipcode(zipcode: string) {
     }
 
     const zipcodesArray: string[] = JSON.parse(zipcodesStr);
-    if (zipcodesArray.includes(zipcode)) {
-      return;
-    }
+
     zipcodesArray.unshift(zipcode);
     if (zipcodesArray.length > MAX_ZIPCODE_HISTORY) {
       zipcodesArray.pop();

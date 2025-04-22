@@ -13,6 +13,7 @@ import {
   fetchThreeDayForecast,
 } from '@/services/weather-api';
 import {
+  CurrentCondition,
   HistoryTemperature,
   WeatherForecast,
 } from '@/types/weather/WeatherTypes';
@@ -22,12 +23,13 @@ import { transformDate } from '@/services/date';
 
 export default function WeatherScreen() {
   const [zipcode, setZipcode] = useState('');
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
-  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [threeDayForecast, setThreeDayForecast] = useState<WeatherForecast[]>(
-    []
-  );
+  const [threeDayForecast, setThreeDayForecast] = useState<{
+    weather: WeatherForecast[];
+    currentCondition: CurrentCondition | null;
+    areaName: string;
+  }>({ weather: [], currentCondition: null, areaName: '' });
   const [historyTemperatures, setHistoryTemperatures] = useState<
     HistoryTemperature[]
   >([]);
@@ -42,7 +44,6 @@ export default function WeatherScreen() {
   );
 
   async function loadHistory() {
-    setIsLoadingHistory(true);
     const zipcodes = await getLastSearchedZipcodes();
 
     let history: HistoryTemperature[] = [];
@@ -54,23 +55,22 @@ export default function WeatherScreen() {
       });
     }
     setHistoryTemperatures(history);
-    setIsLoadingHistory(false);
   }
 
   async function getZipcodeWeather() {
     const _zipcode = zipcode;
-    setIsLoadingSearch(true);
+    setIsLoading(true);
     setError('');
 
     const _threeDayForecast = await fetchThreeDayForecast(_zipcode);
-    if (_threeDayForecast.length === 0) {
+    if (_threeDayForecast.weather.length === 0) {
       setError('Invalid zipcode');
-      setIsLoadingSearch(false);
+      setIsLoading(false);
       return;
     }
     await storeZipcode(_zipcode);
     setThreeDayForecast(_threeDayForecast);
-    setIsLoadingSearch(false);
+    setIsLoading(false);
     await loadHistory();
   }
 
@@ -93,32 +93,41 @@ export default function WeatherScreen() {
             }}
             title='Search'
             color='#841584'
-            disabled={zipcode.length !== 5 || isLoadingSearch}
+            disabled={zipcode.length !== 5 || isLoading}
           />
           {error && (
             <ThemedText type='error' style={styles.errorText}>
               {error}
             </ThemedText>
           )}
+          {isLoading && <ActivityIndicator size='large' animating />}
         </ThemedView>
 
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type='title'>Current Weather</ThemedText>
-        </ThemedView>
+        {threeDayForecast.weather.length !== 0 && (
+          <ThemedView style={{ marginBottom: 24, alignItems: 'center' }}>
+            <ThemedText type='title'>{threeDayForecast.areaName}</ThemedText>
+            <ThemedText type='subtitle'>
+              {`${threeDayForecast.currentCondition?.temp_F}° F`}
+            </ThemedText>
+            <ThemedText>
+              {threeDayForecast.currentCondition?.weatherDesc[0].value}
+            </ThemedText>
+          </ThemedView>
+        )}
+
         <ThemedView>
-          {isLoadingSearch && <ActivityIndicator size='large' animating />}
           <FlatList
-            data={threeDayForecast}
+            data={threeDayForecast.weather}
             keyExtractor={(item) => item.date}
             horizontal
             contentContainerStyle={styles.list}
             ListFooterComponent={<ThemedView style={{ width: 12 }} />}
             renderItem={({ item }) => (
               <ThemedView style={styles.card}>
-                <ThemedText style={styles.date}>
+                <ThemedText style={{ fontWeight: 'bold' }}>
                   {transformDate(item.date)}
                 </ThemedText>
-                <ThemedText style={styles.temp}>
+                <ThemedText>
                   {`${item.mintempF}° F / ${item.maxtempF}° F`}
                 </ThemedText>
               </ThemedView>
@@ -126,21 +135,22 @@ export default function WeatherScreen() {
           />
         </ThemedView>
 
-        <ThemedView style={styles.titleContainer}>
+        <ThemedView style={{ marginTop: 12 }}>
           <ThemedText type='title'>History</ThemedText>
         </ThemedView>
         <ThemedView>
-          {isLoadingHistory && <ActivityIndicator size='large' animating />}
           <FlatList
             data={historyTemperatures}
-            keyExtractor={(item) => item.zipcode}
+            keyExtractor={(_, index) => index.toString()}
             horizontal
             contentContainerStyle={styles.list}
             ListFooterComponent={<ThemedView style={{ width: 12 }} />}
             renderItem={({ item }) => (
               <ThemedView style={styles.card}>
-                <ThemedText style={styles.date}>{item.zipcode}</ThemedText>
-                <ThemedText style={styles.temp}>
+                <ThemedText style={{ fontWeight: 'bold' }}>
+                  {item.zipcode}
+                </ThemedText>
+                <ThemedText>
                   {`Current: ${item.currentTemperature}° F`}
                 </ThemedText>
               </ThemedView>
@@ -157,10 +167,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     marginRight: 12,
     marginTop: 24,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
   },
   errorText: {
     paddingLeft: 12,
@@ -186,15 +192,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
-  },
-  date: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-
-  temp: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
