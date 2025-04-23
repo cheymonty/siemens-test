@@ -1,67 +1,52 @@
-import { PermissionsAndroid, Platform } from 'react-native';
+import { PermissionsAndroid } from 'react-native';
 import * as Device from 'expo-device';
 
 async function requestAndroid31Permissions() {
   const bluetoothScanPermission = await PermissionsAndroid.request(
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
     {
-      title: 'Location Permission',
-      message: 'Bluetooth Low Energy requires Location',
-      buttonPositive: 'OK',
+      title: 'Bluetooth Scan Permission',
+      message: 'This app needs bluetooth scan permission to use bluetooth',
+      buttonNegative: 'DENY',
+      buttonPositive: 'ALLOW',
     }
   );
   const bluetoothConnectPermission = await PermissionsAndroid.request(
     PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
     {
-      title: 'Location Permission',
-      message: 'Bluetooth Low Energy requires Location',
-      buttonPositive: 'OK',
+      title: 'Bluetooth Connect Permission',
+      message: 'This app needs bluetooth connect permission to use bluetooth',
+      buttonNegative: 'DENY',
+      buttonPositive: 'ALLOW',
     }
   );
-  const fineLocationPermission = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-    {
-      title: 'Location Permission',
-      message: 'Bluetooth Low Energy requires Location',
-      buttonPositive: 'OK',
-    }
-  );
+  const fineLocationPermission = await requestLocationPermission();
 
   return (
     bluetoothScanPermission === 'granted' &&
     bluetoothConnectPermission === 'granted' &&
-    fineLocationPermission === 'granted'
+    fineLocationPermission
   );
 }
 
 export async function requestBluetoothPermission() {
-  if (Platform.OS === 'android') {
-    if ((Device.platformApiLevel ?? -1) < 31) {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Location Permission',
-          message: 'Bluetooth Low Energy requires Location',
-          buttonPositive: 'OK',
-        }
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    } else {
-      return await requestAndroid31Permissions();
-    }
+  if ((Device.platformApiLevel ?? -1) < 31) {
+    return await requestLocationPermission();
   } else {
-    return true;
+    return await requestAndroid31Permissions();
   }
 }
 
 export async function requestWifiPermission() {
+  return await requestLocationPermission();
+}
+
+export async function requestCameraPermission() {
   const granted = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    PermissionsAndroid.PERMISSIONS.CAMERA,
     {
-      title: 'Location permission is required for WiFi connections',
-      message:
-        'This app needs location permission as this is required  ' +
-        'to scan for wifi networks.',
+      title: 'Camera Permission',
+      message: 'This app needs camera permission to scan barcodes',
       buttonNegative: 'DENY',
       buttonPositive: 'ALLOW',
     }
@@ -69,14 +54,13 @@ export async function requestWifiPermission() {
   return granted === PermissionsAndroid.RESULTS.GRANTED;
 }
 
-export async function requestCameraPermission() {
+export async function requestLocationPermission() {
   const granted = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.CAMERA,
+    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
     {
-      title: 'Camera permission is required to scan barcode',
+      title: 'Location Permission',
       message:
-        'This app needs camera permission as this is required ' +
-        'to scan barcodes',
+        'This app needs location permission to get current weather, use bluetooth, and scan for wifi networks',
       buttonNegative: 'DENY',
       buttonPositive: 'ALLOW',
     }

@@ -5,7 +5,7 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Device as BleDevice,
   BleManager,
@@ -14,7 +14,7 @@ import {
 } from 'react-native-ble-plx';
 import { ThemedSafeAreaView, ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { requestBluetoothPermission } from '@/services/permissions';
 import { MaterialIcons } from '@expo/vector-icons';
 import { getDeviceServicesAndCharactertistics } from '@/services/ble';
@@ -33,23 +33,21 @@ export default function BluetoothScreen() {
   const router = useRouter();
   const [isConnectingIds, setIsConnectingIds] = useState<string[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      async function setup() {
-        const hasPermission = await requestBluetoothPermission();
-        setHasBluetoothPermission(hasPermission);
-        if (!hasPermission) {
-          return;
-        }
-        await scanForPeripherals();
+  useEffect(() => {
+    async function setup() {
+      const hasPermission = await requestBluetoothPermission();
+      setHasBluetoothPermission(hasPermission);
+      if (!hasPermission) {
+        return;
       }
-      setup();
-      return () => {
-        bleManager.stopDeviceScan();
-        bleManager.destroy();
-      };
-    }, [])
-  );
+      await scanForPeripherals();
+    }
+    setup();
+    return () => {
+      bleManager.stopDeviceScan();
+      bleManager.destroy();
+    };
+  }, []);
 
   async function connectToDevice(device: BleDevice) {
     try {

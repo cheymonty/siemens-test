@@ -9,8 +9,9 @@ import { useState, useCallback } from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedSafeAreaView, ThemedView } from '@/components/ThemedView';
 import {
+  fetchCurrentLocationForecast,
   fetchCurrentTemperature,
-  fetchThreeDayForecast,
+  fetchThreeDayForecastByZipcode,
 } from '@/services/weather-api';
 import {
   CurrentCondition,
@@ -20,6 +21,8 @@ import {
 import { storeZipcode, getLastSearchedZipcodes } from '@/services/storage';
 import { useFocusEffect } from 'expo-router';
 import { transformDate } from '@/services/date';
+import { requestLocationPermission } from '@/services/permissions';
+import IconButton from '@/components/ui/IconButton';
 
 export default function WeatherScreen() {
   const [zipcode, setZipcode] = useState('');
@@ -37,7 +40,12 @@ export default function WeatherScreen() {
   useFocusEffect(
     useCallback(() => {
       async function setup() {
+        setIsLoading(true);
         await loadHistory();
+        if (await requestLocationPermission()) {
+          await getCurrentWeather();
+        }
+        setIsLoading(false);
       }
       setup();
     }, [])
@@ -59,19 +67,26 @@ export default function WeatherScreen() {
 
   async function getZipcodeWeather() {
     const _zipcode = zipcode;
-    setIsLoading(true);
     setError('');
-
-    const _threeDayForecast = await fetchThreeDayForecast(_zipcode);
+    const _threeDayForecast = await fetchThreeDayForecastByZipcode(_zipcode);
     if (_threeDayForecast.weather.length === 0) {
       setError('Invalid zipcode');
-      setIsLoading(false);
       return;
     }
     await storeZipcode(_zipcode);
     setThreeDayForecast(_threeDayForecast);
-    setIsLoading(false);
     await loadHistory();
+  }
+
+  async function getCurrentWeather() {
+    if (await requestLocationPermission()) {
+      const data = await fetchCurrentLocationForecast();
+      setThreeDayForecast({
+        weather: data.weather,
+        currentCondition: data.currentCondition,
+        areaName: data.areaName,
+      });
+    }
   }
 
   return (
@@ -89,11 +104,23 @@ export default function WeatherScreen() {
 
           <Button
             onPress={async () => {
+              setIsLoading(true);
               await getZipcodeWeather();
+              setIsLoading(false);
             }}
             title='Search'
             color='#841584'
             disabled={zipcode.length !== 5 || isLoading}
+          />
+
+          <IconButton
+            onPress={async () => {
+              setIsLoading(true);
+              await getCurrentWeather();
+              setIsLoading(false);
+            }}
+            iconName='gps-fixed'
+            disabled={isLoading}
           />
           {error && (
             <ThemedText type='error' style={styles.errorText}>

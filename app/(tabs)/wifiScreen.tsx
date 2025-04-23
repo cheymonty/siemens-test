@@ -47,29 +47,20 @@ export default function WifiScreen() {
     try {
       const list = await WifiManager.loadWifiList();
       const visibleNetworks = list.filter((item) => item.SSID.trim() !== '');
+      const ssidMap = new Map<string, WifiEntry>();
+      visibleNetworks.forEach((wifi) => {
+        const bssid = wifi.BSSID.toUpperCase();
+        if (bssid === connectedBssid.current && !connectedWifi) {
+          setConnectedWifi(wifi);
+          return;
+        }
 
-      const uniqueBySSID = Array.from(
-        visibleNetworks
-          .reduce((map, wifi) => {
-            const bssid = wifi.BSSID.toUpperCase();
+        if (!ssidMap.has(wifi.SSID)) {
+          ssidMap.set(wifi.SSID, wifi);
+        }
+      });
 
-            if (bssid === connectedBssid.current && !connectedWifi) {
-              setConnectedWifi(wifi);
-              return map;
-            }
-
-            const existing = map.get(wifi.SSID);
-
-            // Keep the strongest signal
-            if (!existing || wifi.level > existing.level) {
-              map.set(wifi.SSID, wifi);
-            }
-
-            return map;
-          }, new Map<string, WifiEntry>())
-          .values()
-      );
-      setAllWifis(uniqueBySSID);
+      setAllWifis(Array.from(ssidMap.values()));
     } catch (e: any) {
       Alert.alert(`Failed to scan for networks`, e.message);
     }
