@@ -122,11 +122,7 @@ export default function WeatherScreen() {
             iconName='gps-fixed'
             disabled={isLoading}
           />
-          {error && (
-            <ThemedText type='error' style={styles.errorText}>
-              {error}
-            </ThemedText>
-          )}
+          {error && <ThemedText style={styles.errorText}>{error}</ThemedText>}
           {isLoading && <ActivityIndicator size='large' animating />}
         </ThemedView>
 
@@ -198,6 +194,7 @@ const styles = StyleSheet.create({
   errorText: {
     paddingLeft: 12,
     textAlignVertical: 'center',
+    color: 'red',
   },
   input: {
     height: 40,
